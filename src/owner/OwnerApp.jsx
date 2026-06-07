@@ -6,9 +6,18 @@ import OrdersBoard from './OrdersBoard.jsx'
 import QRScanner from './QRScanner.jsx'
 import MenuEditor from './MenuEditor.jsx'
 import LocationBroadcast from './LocationBroadcast.jsx'
+import PaymentsEditor from './PaymentsEditor.jsx'
 import { business, env, isSupabaseConfigured } from '../config.js'
 
 const DEMO_KEY = 'ssbbq_owner_unlocked'
+
+const TABS = [
+  ['orders', 'Orders'],
+  ['scan', 'Scan cash'],
+  ['menu', 'Menu'],
+  ['payments', 'Payments'],
+  ['location', 'Location'],
+]
 
 export default function OwnerApp() {
   const { session, isOwner, signOut } = useSession()
@@ -19,42 +28,48 @@ export default function OwnerApp() {
   const [codeErr, setCodeErr] = useState(null)
 
   // ---- access gate ----
-  // Live (Supabase): must be signed in with the owner email.
-  // Demo (no Supabase): unlock with the demo passcode.
-  const allowed = isSupabaseConfigured ? isOwner : demoUnlocked
+  // You're the owner if you're signed in with the owner email (works in both
+  // demo and Supabase). In demo mode, the passcode is an extra fallback.
+  const allowed = isOwner || (!isSupabaseConfigured && demoUnlocked)
 
   if (!allowed) {
+    const wrongAccount = session && session.kind !== 'guest' && !isOwner
     return (
       <div className="app">
         <div className="account-bar"><Link to="/" className="link-btn">← Customer view</Link></div>
-        <header className="header"><h1>{business.name}</h1><p className="tagline">Owner dashboard</p></header>
+        <header className="header"><h1>{business.name}</h1><p className="tagline">Owner sign in</p></header>
 
-        {isSupabaseConfigured ? (
-          session && !isOwner ? (
-            <div className="card" style={{ marginTop: 20 }}>
-              <div className="status err">
-                Signed in as {session.email || 'this account'}, which isn't the owner email
-                {env.ownerEmail ? ` (${env.ownerEmail})` : ''}.
-              </div>
-              <button className="btn secondary" style={{ marginTop: 12 }} onClick={signOut}>Sign out</button>
+        {wrongAccount ? (
+          <div className="card" style={{ marginTop: 20 }}>
+            <div className="status err">
+              You're signed in as {session.email || 'this account'}, which isn't the owner
+              {env.ownerEmail ? ` (${env.ownerEmail})` : ''}. Sign out and use the owner account.
             </div>
-          ) : (
-            <div style={{ marginTop: 20 }}>
+            <button className="btn secondary" style={{ marginTop: 12 }} onClick={signOut}>Sign out</button>
+          </div>
+        ) : (
+          <>
+            <p className="m-sub" style={{ textAlign: 'center', marginTop: 16 }}>
+              Sign in with the owner email{env.ownerEmail ? <> <strong>({env.ownerEmail})</strong></> : null} to manage orders, menu, payments &amp; location.
+            </p>
+            <div style={{ marginTop: 8 }}>
               <AuthPanel allowGuest={false} title="Owner sign in" onClose={null} />
             </div>
-          )
-        ) : (
-          <div className="card" style={{ marginTop: 20 }}>
-            <h3 className="cat-title">Enter owner passcode</h3>
-            <p className="m-sub">Demo mode. Default passcode is <code>{env.demoOwnerPasscode}</code> (set <code>VITE_DEMO_OWNER_PASSCODE</code> to change).</p>
-            <input className="field" type="password" placeholder="Passcode" value={code}
-              onChange={(e) => setCode(e.target.value)} />
-            <button className="btn" onClick={() => {
-              if (code === env.demoOwnerPasscode) { localStorage.setItem(DEMO_KEY, '1'); setDemoUnlocked(true) }
-              else setCodeErr('Wrong passcode.')
-            }}>Unlock dashboard</button>
-            {codeErr ? <div className="status err">{codeErr}</div> : null}
-          </div>
+
+            {!isSupabaseConfigured ? (
+              <div className="card" style={{ marginTop: 16 }}>
+                <h3 className="cat-title">Or use the demo passcode</h3>
+                <p className="m-sub">Offline demo only. Passcode: <code>{env.demoOwnerPasscode}</code></p>
+                <input className="field" type="password" placeholder="Passcode" value={code}
+                  onChange={(e) => setCode(e.target.value)} />
+                <button className="btn" onClick={() => {
+                  if (code === env.demoOwnerPasscode) { localStorage.setItem(DEMO_KEY, '1'); setDemoUnlocked(true) }
+                  else setCodeErr('Wrong passcode.')
+                }}>Unlock dashboard</button>
+                {codeErr ? <div className="status err">{codeErr}</div> : null}
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     )
@@ -62,8 +77,8 @@ export default function OwnerApp() {
 
   // ---- dashboard ----
   function lock() {
-    if (isSupabaseConfigured) signOut()
-    else { localStorage.removeItem(DEMO_KEY); setDemoUnlocked(false) }
+    localStorage.removeItem(DEMO_KEY); setDemoUnlocked(false)
+    if (session) signOut()
   }
 
   return (
@@ -76,10 +91,8 @@ export default function OwnerApp() {
       <header className="header"><h1>{business.name}</h1><p className="tagline">Owner dashboard</p></header>
 
       <div className="tabs">
-        {['orders', 'scan', 'menu', 'location'].map((t) => (
-          <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => setTab(t)}>
-            {t === 'orders' ? 'Orders' : t === 'scan' ? 'Scan cash' : t === 'menu' ? 'Menu' : 'Location'}
-          </button>
+        {TABS.map(([t, label]) => (
+          <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => setTab(t)}>{label}</button>
         ))}
       </div>
 
@@ -87,6 +100,7 @@ export default function OwnerApp() {
         {tab === 'orders' ? <OrdersBoard refreshKey={refreshKey} /> : null}
         {tab === 'scan' ? <QRScanner onPaid={() => setRefreshKey((k) => k + 1)} /> : null}
         {tab === 'menu' ? <MenuEditor /> : null}
+        {tab === 'payments' ? <PaymentsEditor /> : null}
         {tab === 'location' ? <LocationBroadcast /> : null}
       </div>
     </div>

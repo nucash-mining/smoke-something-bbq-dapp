@@ -98,13 +98,30 @@ grant execute on function track_order(text) to anon, authenticated;
 -- ---------- BUSINESS SETTINGS (singleton row id=1) ----------
 create table if not exists business_settings (
   id int primary key default 1,
-  location_lat double precision,
+  location_lat double precision,        -- live broadcast position
   location_lng double precision,
   location_enabled boolean default false,
+  base_lat double precision,            -- "usual spot" shown when not live
+  base_lng double precision,
+  base_label text,
+  cashapp_tag text,                     -- payment accounts (set in dashboard)
+  venmo_handle text,
+  paypal_handle text,
+  crypto_address text,
+  gateway_url text,
   updated_at timestamptz default now(),
   constraint singleton check (id = 1)
 );
 insert into business_settings (id) values (1) on conflict (id) do nothing;
+-- If you ran an older version of this file:
+alter table business_settings add column if not exists base_lat double precision;
+alter table business_settings add column if not exists base_lng double precision;
+alter table business_settings add column if not exists base_label text;
+alter table business_settings add column if not exists cashapp_tag text;
+alter table business_settings add column if not exists venmo_handle text;
+alter table business_settings add column if not exists paypal_handle text;
+alter table business_settings add column if not exists crypto_address text;
+alter table business_settings add column if not exists gateway_url text;
 
 -- ---------- ADMINS (who can manage the business) ----------
 create table if not exists admins ( email text primary key );

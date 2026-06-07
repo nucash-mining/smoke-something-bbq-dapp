@@ -24,6 +24,7 @@ export default function LocationCard() {
   const [loading, setLoading] = useState(true)
   const mapRef = useRef(null)
   const mapObj = useRef(null)
+  const markerRef = useRef(null)
 
   // poll the owner's shared location every 20s so customers see them move/appear
   useEffect(() => {
@@ -34,29 +35,33 @@ export default function LocationCard() {
     return () => { active = false; clearInterval(t) }
   }, [])
 
+  // Priority: live broadcast > saved usual spot > Facebook fallback.
   const live = settings?.location_enabled && settings?.location_lat != null && settings?.location_lng != null
-  const lat = settings?.location_lat
-  const lng = settings?.location_lng
+  const hasBase = settings?.base_lat != null && settings?.base_lng != null
+  const showMap = live || hasBase
+  const lat = live ? settings.location_lat : settings?.base_lat
+  const lng = live ? settings.location_lng : settings?.base_lng
 
   useEffect(() => {
-    if (!live || !mapRef.current) return
+    if (!showMap || !mapRef.current) return
     if (!mapObj.current) {
       const map = L.map(mapRef.current).setView([lat, lng], 15)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors', maxZoom: 19,
       }).addTo(map)
-      L.marker([lat, lng], { icon: Icon }).addTo(map).bindPopup(`${business.name} is here`)
+      markerRef.current = L.marker([lat, lng], { icon: Icon }).addTo(map).bindPopup(`${business.name}`)
       mapObj.current = map
       setTimeout(() => map.invalidateSize(), 0)
     } else {
       mapObj.current.setView([lat, lng], 15)
+      if (markerRef.current) markerRef.current.setLatLng([lat, lng])
     }
-  }, [live, lat, lng])
+  }, [showMap, lat, lng])
 
-  // tear down map when going offline
+  // tear down map when nothing to show
   useEffect(() => {
-    if (!live && mapObj.current) { mapObj.current.remove(); mapObj.current = null }
-  }, [live])
+    if (!showMap && mapObj.current) { mapObj.current.remove(); mapObj.current = null; markerRef.current = null }
+  }, [showMap])
 
   return (
     <section className="section">
@@ -64,14 +69,22 @@ export default function LocationCard() {
       <div className="card">
         {loading ? (
           <p className="m-sub">Checking location…</p>
-        ) : live ? (
+        ) : showMap ? (
           <>
             <div className="live-row">
-              <span className="live-badge"><span className="live-dot" /> LIVE</span>
-              <span className="m-sub">
-                {business.name} is sharing their location
-                {settings?.updated_at ? ` · updated ${timeAgo(settings.updated_at)}` : ''}
-              </span>
+              {live ? (
+                <>
+                  <span className="live-badge"><span className="live-dot" /> LIVE</span>
+                  <span className="m-sub">
+                    {business.name} is here now
+                    {settings?.updated_at ? ` · updated ${timeAgo(settings.updated_at)}` : ''}
+                  </span>
+                </>
+              ) : (
+                <span className="m-sub">
+                  📍 {settings?.base_label ? settings.base_label : 'Our usual spot'}
+                </span>
+              )}
             </div>
             <div id="map" ref={mapRef} />
             <a className="btn" style={{ marginTop: 12, display: 'block', textAlign: 'center', textDecoration: 'none' }}
@@ -81,7 +94,7 @@ export default function LocationCard() {
           </>
         ) : (
           <p className="m-sub" style={{ margin: 0 }}>
-            We're not sharing a live location right now. Check our{' '}
+            We're not sharing a location right now. Check our{' '}
             <a href={business.facebook} target="_blank" rel="noreferrer" style={{ color: 'var(--ember-2)' }}>
               Facebook page
             </a>{' '}for today's spot.

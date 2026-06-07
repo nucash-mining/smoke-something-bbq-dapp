@@ -3,7 +3,9 @@ import { crypto, isPlaceholder } from '../config.js'
 import { CHAINS } from '../lib/chains.js'
 import { payNative, hasWallet } from '../lib/web3.js'
 
-export default function CryptoPay({ amount }) {
+export default function CryptoPay({ amount, receiveAddress }) {
+  // Owner's saved address (from dashboard) overrides the config default.
+  const toAddress = receiveAddress || crypto.receiveAddress
   // Only show chains the owner enabled in config.
   const enabledChains = useMemo(
     () =>
@@ -20,7 +22,7 @@ export default function CryptoPay({ amount }) {
   if (!crypto.enabled || enabledChains.length === 0) return null
 
   const chain = CHAINS[selected]
-  const addrMissing = isPlaceholder(crypto.receiveAddress)
+  const addrMissing = isPlaceholder(toAddress)
   const validAmount = amount && Number(amount) > 0
 
   async function handlePay() {
@@ -40,7 +42,7 @@ export default function CryptoPay({ amount }) {
       setStatus({ type: 'ok', node: <>Confirm the transaction in your wallet…</> })
       const res = await payNative({
         chain,
-        to: crypto.receiveAddress,
+        to: toAddress,
         amount,
       })
       setStatus({

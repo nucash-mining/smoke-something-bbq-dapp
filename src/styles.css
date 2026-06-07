@@ -398,6 +398,19 @@ body {
 .oc-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
 .oc-actions .btn { flex: 1 1 auto; min-width: 130px; }
 
+/* ---------- Owner: payment accounts editor ---------- */
+.pay-field { display: block; margin-bottom: 14px; }
+.pf-label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; }
+.pf-input { display: flex; align-items: stretch; }
+.pf-prefix {
+  display: flex; align-items: center; padding: 0 10px; color: var(--text-dim);
+  background: var(--bg); border: 1px solid var(--line); border-right: none;
+  border-radius: 9px 0 0 9px; font-size: 0.9rem; white-space: nowrap;
+}
+.pf-input .field { border-radius: 0 9px 9px 0; }
+.pf-prefix + .field { border-left: none; }
+.pf-hint { display: block; font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+
 /* ---------- Item images ---------- */
 .menu-item-wrap { border-top: 1px solid var(--line); }
 .menu-item-wrap:first-of-type { border-top: none; }
