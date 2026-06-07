@@ -29,6 +29,10 @@ jobs:
       - uses: android-actions/setup-android@v3
 
       - name: Install deps & build web
+        env:
+          VITE_OWNER_EMAIL: ${{ vars.VITE_OWNER_EMAIL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: |
           npm ci
           npm run build
@@ -73,6 +77,10 @@ jobs:
           cache: npm
 
       - name: Install deps & build web
+        env:
+          VITE_OWNER_EMAIL: ${{ vars.VITE_OWNER_EMAIL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: |
           npm ci
           npm run build
