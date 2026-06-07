@@ -186,6 +186,17 @@ body {
 }
 .coords { margin-top: 10px; font-size: 0.85rem; color: var(--text-dim); }
 
+.live-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.live-badge {
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 0.72rem;
+  letter-spacing: 1px; color: #fff; background: #c0392b; padding: 4px 9px; border-radius: 999px;
+}
+.live-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #fff;
+  animation: livepulse 1.4s ease-in-out infinite;
+}
+@keyframes livepulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+
 .footer {
   text-align: center; margin-top: 40px; color: var(--text-dim);
   font-size: 0.8rem; line-height: 1.6;

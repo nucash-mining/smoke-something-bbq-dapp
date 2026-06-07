@@ -12,6 +12,13 @@ const Icon = L.icon({
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
 })
 
+function timeAgo(iso) {
+  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000))
+  if (s < 60) return `${s}s ago`
+  if (s < 3600) return `${Math.round(s / 60)}m ago`
+  return `${Math.round(s / 3600)}h ago`
+}
+
 export default function LocationCard() {
   const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -23,7 +30,7 @@ export default function LocationCard() {
     let active = true
     const load = () => getSettings().then((s) => active && setSettings(s)).finally(() => active && setLoading(false))
     load()
-    const t = setInterval(load, 20000)
+    const t = setInterval(load, 15000)
     return () => { active = false; clearInterval(t) }
   }, [])
 
@@ -59,6 +66,13 @@ export default function LocationCard() {
           <p className="m-sub">Checking location…</p>
         ) : live ? (
           <>
+            <div className="live-row">
+              <span className="live-badge"><span className="live-dot" /> LIVE</span>
+              <span className="m-sub">
+                {business.name} is sharing their location
+                {settings?.updated_at ? ` · updated ${timeAgo(settings.updated_at)}` : ''}
+              </span>
+            </div>
             <div id="map" ref={mapRef} />
             <a className="btn" style={{ marginTop: 12, display: 'block', textAlign: 'center', textDecoration: 'none' }}
               href={mapsLink(lat, lng, business.name)} target="_blank" rel="noreferrer">
