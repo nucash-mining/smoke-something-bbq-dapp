@@ -52,9 +52,10 @@ body {
   pointer-events: none;
 }
 .header .logo {
-  width: 84px; height: 84px; object-fit: contain;
-  margin-bottom: 10px; border-radius: 12px;
+  width: auto; height: auto; max-height: 130px; max-width: 78%;
+  object-fit: contain; margin: 0 auto 10px; display: block; border-radius: 12px;
 }
+@media (max-width: 600px) { .header .logo { max-height: 110px; } }
 .header h1 {
   margin: 4px 0 2px;
   font-size: 1.9rem;

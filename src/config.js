@@ -14,7 +14,7 @@ export const business = {
   // Optional: a phone number for SMS/orders (leave '' to hide)
   phone: '',
   // Logo path inside /public (drop a file there and set its name)
-  logo: '',
+  logo: 'logo.jpg',
 }
 
 // -----------------------------------------------------------------------------
