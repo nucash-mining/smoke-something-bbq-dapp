@@ -1,0 +1,37 @@
+# deps & build
+node_modules
+dist
+.vite
+*.local
+
+# secrets / env
+.env
+.env.*
+!.env.example
+
+# os
+.DS_Store
+Thumbs.db
+
+# ---- Capacitor / Android ----
+android/.gradle
+android/app/build
+android/build
+android/captures
+android/.idea
+android/local.properties
+android/app/release
+*.keystore
+*.jks
+!debug.keystore
+
+# ---- Capacitor / iOS ----
+ios/App/Pods
+ios/App/build
+ios/App/Podfile.lock
+ios/.gradle
+DerivedData
+xcuserdata
+
+# misc
+*.log

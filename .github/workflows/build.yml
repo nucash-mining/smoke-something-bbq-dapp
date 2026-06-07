@@ -1,0 +1,103 @@
+name: Build mobile apps
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------- Android APK
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install deps & build web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync Capacitor (Android)
+        run: npx cap sync android
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk smoke-something-bbq.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-something-bbq-apk
+          path: smoke-something-bbq.apk
+
+      # Attach the APK to a GitHub Release when you push a tag like v1.0.0
+      - name: Release APK on tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: smoke-something-bbq.apk
+
+  # ------------------------------------------------------------------ iOS build
+  # iOS can only be compiled on macOS. This builds an UNSIGNED simulator app to
+  # prove the project compiles. For a real device .ipa / App Store upload you
+  # need an Apple Developer account ($99/yr) and signing certificates added as
+  # GitHub secrets — see README.
+  ios:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps & build web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync Capacitor (iOS)
+        run: npx cap sync ios
+
+      - name: Build unsigned iOS app (simulator)
+        run: |
+          cd ios/App
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package .app
+        run: |
+          cd ios/App/build/Build/Products/Debug-iphonesimulator
+          zip -r "$GITHUB_WORKSPACE/smoke-something-bbq-ios-sim.zip" App.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-something-bbq-ios-sim
+          path: smoke-something-bbq-ios-sim.zip
