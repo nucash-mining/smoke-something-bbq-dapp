@@ -39,6 +39,13 @@ export default function Checkout({ onNeedAuth }) {
         subtotal,
         paymentMethod: method,
       })
+      // Save a reference so this device can track the order (incl. guests).
+      try {
+        const refs = JSON.parse(localStorage.getItem('ssbbq_my_order_refs') || '[]')
+        refs.unshift({ id: o.id, token: o.claim_token, at: Date.now() })
+        localStorage.setItem('ssbbq_my_order_refs', JSON.stringify(refs.slice(0, 25)))
+      } catch { /* ignore */ }
+      window.dispatchEvent(new Event('ssbbq-orders-changed'))
       setOrder(o)
       clearCart()
       refreshPoints()

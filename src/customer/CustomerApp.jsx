@@ -5,6 +5,7 @@ import LocationCard from './LocationCard.jsx'
 import Menu from './Menu.jsx'
 import Cart from './Cart.jsx'
 import Checkout from './Checkout.jsx'
+import MyOrders from './MyOrders.jsx'
 import AuthPanel from '../auth/AuthPanel.jsx'
 import { useSession } from '../context/SessionContext.jsx'
 import { business, loyalty, isSupabaseConfigured } from '../config.js'
@@ -41,6 +42,7 @@ export default function CustomerApp() {
 
       {cartCount > 0 ? <div className="cart-pill">🛒 {cartCount} item{cartCount > 1 ? 's' : ''} in your order</div> : null}
 
+      <MyOrders />
       <LocationCard />
       <Menu onNeedAuth={() => setAuthOpen(true)} />
       <Cart />

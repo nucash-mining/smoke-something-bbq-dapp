@@ -82,8 +82,11 @@ export default function QRScanner({ onPaid }) {
               <li key={i}>{it.qty}× {it.name} {it.price != null ? `(${fmtPrice(it.price)})` : '(Ask)'}</li>
             ))}
           </ul>
-          <div className="m-sub">Status: <strong>{order.status}</strong>{order.guest_name ? ` · ${order.guest_name}` : ''}</div>
-          {order.status !== 'paid' ? (
+          <div className="m-sub">
+            Payment: <strong>{order.paid ? 'Paid ✓' : 'NOT PAID'}</strong>
+            {order.guest_name ? ` · ${order.guest_name}` : ''}
+          </div>
+          {!order.paid ? (
             <button className="btn" style={{ marginTop: 10 }} onClick={confirmPaid}>Confirm cash received · {fmtPrice(order.subtotal)}</button>
           ) : null}
           <button className="btn secondary" style={{ marginTop: 10 }} onClick={() => { setOrder(null); setMsg(null) }}>Scan another</button>

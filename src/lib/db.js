@@ -79,7 +79,8 @@ export async function createOrder({ session, items, subtotal, paymentMethod, gue
     items,
     subtotal,
     payment_method: paymentMethod,
-    status: 'pending',
+    status: 'new',   // fulfillment lifecycle: new -> preparing -> ready -> completed
+    paid: false,     // payment is separate from fulfillment
     claim_token,
     guest_name: session?.kind === 'guest' ? (guestName || session.displayName) : null,
   }
@@ -148,18 +149,19 @@ export async function getOrderByToken(claimToken) {
   return read(LS_ORDERS, []).find((o) => o.claim_token === claimToken) || null
 }
 
-// Owner action: confirm payment + award points.
+// Owner action: confirm payment (cash received / app payment) + award points.
+// This does NOT change fulfillment status — see setOrderStatus for that.
 export async function markOrderPaid(orderId, paymentMethod) {
   if (isSupabaseConfigured) {
     const { data: order, error: e1 } = await supabase
       .from('orders').select('*').eq('id', orderId).single()
     if (e1) throw e1
-    if (order.status === 'paid') return order
+    if (order.paid) return order
     const pts = pointsFor(order.subtotal)
     const { data, error } = await supabase
       .from('orders')
       .update({
-        status: 'paid',
+        paid: true,
         paid_at: new Date().toISOString(),
         payment_method: paymentMethod || order.payment_method,
         points_awarded: pts,
@@ -182,9 +184,9 @@ export async function markOrderPaid(orderId, paymentMethod) {
 
   const orders = read(LS_ORDERS, [])
   const o = orders.find((x) => x.id === orderId)
-  if (!o || o.status === 'paid') return o
+  if (!o || o.paid) return o
   const pts = pointsFor(o.subtotal)
-  o.status = 'paid'
+  o.paid = true
   o.paid_at = new Date().toISOString()
   o.payment_method = paymentMethod || o.payment_method
   o.points_awarded = pts
@@ -195,6 +197,37 @@ export async function markOrderPaid(orderId, paymentMethod) {
     if (key) { users[key].points = (users[key].points || 0) + pts; write(LS_USERS, users) }
   }
   return o
+}
+
+// Owner action: advance the fulfillment status (new->preparing->ready->completed
+// or 'cancelled'). Independent of payment.
+export async function setOrderStatus(orderId, status) {
+  const patch = { status }
+  if (status === 'completed') patch.picked_up_at = new Date().toISOString()
+  if (isSupabaseConfigured) {
+    const { data, error } = await supabase
+      .from('orders').update(patch).eq('id', orderId).select().single()
+    if (error) throw error
+    return data
+  }
+  const orders = read(LS_ORDERS, [])
+  const o = orders.find((x) => x.id === orderId)
+  if (!o) return null
+  Object.assign(o, patch)
+  write(LS_ORDERS, orders)
+  return o
+}
+
+// Customer-facing: look up a single order by its claim token (for guests who
+// don't have an account but kept their order reference on this device).
+export async function trackOrder(claimToken) {
+  if (isSupabaseConfigured) {
+    // public RPC (security definer) returns limited fields — see schema.sql
+    const { data, error } = await supabase.rpc('track_order', { p_token: claimToken })
+    if (error) throw error
+    return Array.isArray(data) ? data[0] || null : data
+  }
+  return read(LS_ORDERS, []).find((o) => o.claim_token === claimToken) || null
 }
 
 // ============================ PROFILE / POINTS ============================

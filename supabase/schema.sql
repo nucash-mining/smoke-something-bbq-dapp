@@ -63,15 +63,37 @@ create table if not exists orders (
   guest_name text,
   items jsonb not null default '[]',
   subtotal numeric(10,2) not null default 0,
-  status text not null default 'pending',  -- pending|paid|fulfilled|cancelled
+  -- fulfillment lifecycle (independent of payment): new|preparing|ready|completed|cancelled
+  status text not null default 'new',
+  paid boolean not null default false,     -- has the owner received the money?
   payment_method text,                     -- cash|cashapp|paypal|venmo|crypto|gateway
   points_awarded int default 0,
   claim_token text,                        -- random token embedded in the cash QR
   created_at timestamptz default now(),
-  paid_at timestamptz
+  paid_at timestamptz,
+  picked_up_at timestamptz
 );
 create index if not exists orders_claim_token_idx on orders(claim_token);
 create index if not exists orders_status_idx on orders(status);
+-- If you ran an older version of this file:
+alter table orders add column if not exists paid boolean not null default false;
+alter table orders add column if not exists picked_up_at timestamptz;
+
+-- Public guest order tracking: returns limited fields for one claim token.
+-- (Guests have no account, so RLS would otherwise hide their order. This
+-- SECURITY DEFINER function exposes only non-sensitive status fields.)
+create or replace function track_order(p_token text)
+returns table (
+  id uuid, items jsonb, subtotal numeric, status text, paid boolean,
+  payment_method text, claim_token text, created_at timestamptz,
+  paid_at timestamptz, picked_up_at timestamptz
+)
+language sql security definer set search_path = public as $$
+  select id, items, subtotal, status, paid, payment_method, claim_token,
+         created_at, paid_at, picked_up_at
+  from orders where claim_token = p_token limit 1;
+$$;
+grant execute on function track_order(text) to anon, authenticated;
 
 -- ---------- BUSINESS SETTINGS (singleton row id=1) ----------
 create table if not exists business_settings (

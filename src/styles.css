@@ -354,6 +354,50 @@ body {
 .or-total { font-weight: 800; }
 .badge { color: #1a1208; border-radius: 6px; padding: 1px 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
 
+/* ---------- Order status: payment badge ---------- */
+.pay-badge {
+  border-radius: 6px; padding: 2px 9px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px;
+}
+.pay-badge.paid { background: #173d2c; color: #6fe0a8; border: 1px solid var(--good); }
+.pay-badge.unpaid { background: #43170f; color: #ffb4a3; border: 1px solid #b3493a; }
+
+/* ---------- Customer: My Orders ---------- */
+.my-order { margin-bottom: 12px; }
+.mo-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.mo-id { font-weight: 800; font-family: ui-monospace, monospace; }
+.mo-itemlist { list-style: none; margin: 0 0 4px; padding: 0; }
+.mo-itemlist li, .oc-items li {
+  display: flex; justify-content: space-between; gap: 12px; padding: 4px 0;
+  font-size: 0.92rem; border-top: 1px solid var(--line);
+}
+.mo-itemlist li:first-child, .oc-items li:first-child { border-top: none; }
+.mo-times, .oc-times { margin-top: 10px; display: grid; gap: 4px; }
+.mo-times > div, .oc-times > div { display: flex; justify-content: space-between; gap: 12px; font-size: 0.82rem; }
+.mo-tlabel { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.7rem; }
+.cash-reshow { margin-top: 10px; }
+.cash-reshow summary { cursor: pointer; color: var(--ember-2); font-size: 0.9rem; }
+
+/* ---------- Status timeline ---------- */
+.timeline { display: flex; justify-content: space-between; margin: 14px 0 6px; position: relative; }
+.timeline::before {
+  content: ''; position: absolute; top: 7px; left: 8%; right: 8%; height: 2px; background: var(--line);
+}
+.tl-step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; position: relative; z-index: 1; }
+.tl-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--bg-card-2); border: 2px solid var(--line); }
+.tl-step.done .tl-dot { background: var(--good); border-color: var(--good); }
+.tl-step.now .tl-dot { background: var(--ember); border-color: var(--ember); box-shadow: 0 0 0 4px rgba(232,82,31,0.25); }
+.tl-label { font-size: 0.68rem; color: var(--text-dim); text-align: center; }
+.tl-step.done .tl-label { color: var(--text); }
+
+/* ---------- Owner: order cards ---------- */
+.order-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; background: var(--bg-card-2); }
+.oc-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.oc-id { font-weight: 800; font-family: ui-monospace, monospace; }
+.oc-items { list-style: none; margin: 0; padding: 0; }
+.oc-total { display: flex; justify-content: space-between; font-weight: 800; padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--line); }
+.oc-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.oc-actions .btn { flex: 1 1 auto; min-width: 130px; }
+
 /* ---------- Item images ---------- */
 .menu-item-wrap { border-top: 1px solid var(--line); }
 .menu-item-wrap:first-of-type { border-top: none; }
